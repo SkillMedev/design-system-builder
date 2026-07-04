@@ -9,7 +9,7 @@ Reach for this when you're standing up or maturing a real design system and need
 ## Install
 
 - **From the catalog:** [skillme.dev/pack/design-system-builder](https://skillme.dev/pack/design-system-builder) — install the whole pack into Claude in one step.
-- **With the skills CLI:** `npx skills add aouellets/design-system-builder`
+- **With the skills CLI:** `npx skills add SkillMedev/design-system-builder`
 - **Manually:** copy any `skills/<slug>/SKILL.md` into your Claude skills directory.
 
 ## Skills in this pack
