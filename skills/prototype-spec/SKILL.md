@@ -1,81 +1,121 @@
 ---
 name: Prototype Spec
-description: Write an implementation-ready prototype spec covering interactions, states, and edges.
+description: Turns a static design into a numbered, testable, dev-ready specification covering every state, interaction, breakpoint, motion detail, and edge case the mockup cannot show. Use when someone asks "write the spec for this screen", "engineering keeps asking what happens when", "document the interactions before handoff", "what states does this component need", or a build came back wrong because behavior was never written down. Do NOT use for the motion token details themselves — use motion-spec instead; for verifying a finished build against the spec, use design-qa-checklist.
 ---
 
 # Prototype Spec
 
-Use this skill to turn a static design into a precise, build-ready specification of
-behavior — so engineering doesn't guess at the parts the mockup can't show.
+A static mockup shows one moment of one state on one screen size; engineering has to invent everything else, and every invention is a coin flip that lands in QA or in production. This skill converts a design into numbered, testable behavior statements so the build matches intent the first time, instead of surfacing as "that's not what I meant" a sprint later.
 
-## What a spec must answer
+A spec must answer three questions the mockup cannot: what happens when I touch it, what does it look like in every state, and what happens when something goes wrong.
 
-A static design shows what something looks like at rest. A spec answers:
+## Operating procedure
 
-- What happens when I touch it?
-- What does it look like in every state?
-- What happens when something goes wrong?
+Order matters: the element inventory (Step 2) feeds every later step, and states must exist before interactions can reference them.
 
-## Step 1: Inventory the interactive elements
+### Step 1: Gather inputs
 
-List every control: buttons, inputs, toggles, draggables, scroll regions, gestures.
-For each, you will specify its states and interactions below.
+1. The design files and which screens are in scope.
+2. Fidelity target — pick from the ladder below; do not spec at higher fidelity than the decision requires.
+3. Supported breakpoints and input modes (touch, pointer, keyboard).
+4. The design token and motion system names, so the spec references tokens, never raw values.
+5. Known backend realities: what can be slow, what can fail, what can be empty. If unknown, mark each as a guess and flag for engineering confirmation.
 
-## Step 2: Specify states
+**Fidelity ladder** — match spec depth to project phase:
 
-For each interactive element, define every visual state:
+- **Lo-fi** (concept validation, early usability tests): flows and layout intent only; no redlines, no motion. Speccing pixel details here wastes work that the next iteration deletes.
+- **Mid-fi** (scoping, estimation): element inventory, key states, happy-path interactions.
+- **Hi-fi / dev-ready** (build handoff): everything below — full states, redlines, motion, breakpoints, edge cases. This is the level the rest of this procedure produces.
 
-- Default, hover, focus, active/pressed, disabled.
-- Loading, success, error (where applicable).
-- Selected / unselected, expanded / collapsed.
+### Step 2: Inventory the interactive elements
 
-Describe what changes between states (color, elevation, label, icon) referencing
-tokens, not raw values.
+List every control per screen: buttons, inputs, toggles, draggables, scroll regions, gestures. Anything a user can act on gets a row. This inventory is the spec's table of contents — an element missing here is behavior nobody specs.
 
-## Step 3: Specify interactions
+### Step 3: Specify states
 
-For each interaction, write a trigger → response statement:
+For each element, define every visual state: default, hover, focus, active/pressed, disabled; loading, success, error where applicable; selected/unselected, expanded/collapsed. Describe what changes between states (color, elevation, label, icon) by token name, not raw hex or px. A button with fewer than five defined states is almost always underspecified.
 
-- **Trigger** — the input (tap, hover 300ms, drag, key press, scroll past threshold).
-- **Response** — what changes and how (state change, navigation, data mutation).
-- **Transition** — duration, easing, and what animates (reference the motion system).
-- **Feedback** — immediate acknowledgment (ripple, spinner, optimistic update).
+### Step 4: Specify interactions as trigger → response
 
-## Step 4: Transitions between screens
+Write each as a four-part statement:
 
-For navigations and overlays, specify:
+- **Trigger** — the exact input: tap, hover 300ms, drag past 40px, Enter key, scroll past threshold.
+- **Response** — what changes: state change, navigation, data mutation.
+- **Transition** — duration, easing, and what animates, by motion-system token (defer curve/duration definitions to motion-spec).
+- **Feedback** — immediate acknowledgment within 100ms: ripple, spinner, optimistic update. If the response can take longer than 400ms, a loading affordance is mandatory.
 
-- Enter and exit animation (direction, duration, easing).
-- Whether the previous screen persists, dims, or unmounts.
-- Shared-element transitions if any element morphs across screens.
+### Step 5: Specify screen transitions
 
-## Step 5: Edge and error behavior
+For navigations and overlays: enter and exit animation (direction, duration token, easing token); whether the previous screen persists, dims, or unmounts; shared-element transitions if any element morphs across screens.
 
-Document the unhappy paths the prototype must handle:
+### Step 6: Specify breakpoints and redlines
 
-- Empty data, loading, and error states for every data-driven view.
-- What happens on slow network (skeletons, progressive reveal, timeout).
-- Validation timing — on blur, on submit, or live?
-- Concurrency: double-tap, rapid navigation, offline.
+- Per supported breakpoint: what reflows, what collapses, what disappears, and minimum touch target (44x44px on touch).
+- Redlines by token: spacing, sizing, and type references engineering can map to code constants. A raw pixel value in a spec is a future inconsistency.
 
-## Step 6: Conditional logic
+### Step 7: Specify edge and error behavior
 
-Spell out rules in plain language: "If the cart is empty, the Checkout button is
-disabled and shows tooltip X." Cover every branch a designer implied but didn't draw.
+Document every unhappy path: empty, loading, and error states for each data-driven view; slow-network behavior (skeletons, progressive reveal, timeout threshold and what happens at it); validation timing — on blur, on submit, or live, chosen deliberately per field; concurrency — double-tap, rapid navigation, offline. Spell out conditional logic in plain language: "If the cart is empty, the Checkout button is disabled and shows tooltip X." Cover every branch the design implied but did not draw.
 
-## Step 7: Accessibility behavior
+### Step 8: Specify accessibility behavior
 
-- Focus order and focus trapping for modals.
-- Keyboard equivalents for every pointer interaction.
-- Announcements for dynamic content (live regions).
+Focus order and focus trapping for modals; keyboard equivalents for every pointer interaction; live-region announcements for dynamic content; visible focus states already covered in Step 3.
 
-## Format
+### Step 9: Format as numbered, testable statements
 
-Write specs as numbered, testable statements. Each should be verifiable by a QA
-engineer without asking a follow-up. Group by screen, then by element.
+Group by screen, then by element. Each statement must be verifiable by a QA engineer without a follow-up question — "feels snappy" is not a spec; "transition completes in duration-fast with easing-exit" is.
 
-## Output
+## Spec skeleton (copy and fill)
 
-Deliver a spec document: element inventory, state matrices, interaction statements
-with timing, transition specs, edge-case behaviors, and accessibility notes — ready
-to hand directly to engineering.
+```
+SPEC — [FILL: screen name]            Fidelity: hi-fi / dev-ready
+Tokens referenced: [FILL: token set + motion system names]
+
+ELEMENT INVENTORY
+  E1 [FILL: element]   E2 [FILL: element]   ...
+
+E1 — [FILL: element name]
+  STATES
+    default: [FILL: tokens]        hover: [FILL]
+    focus: [FILL: visible ring]    active: [FILL]
+    disabled: [FILL + why it can be disabled]
+    loading / error: [FILL or "n/a because ..."]
+  INTERACTIONS
+    1. Trigger: [FILL] → Response: [FILL]
+       Transition: [FILL: duration + easing tokens] Feedback: [FILL, <100ms]
+  BREAKPOINTS
+    ≥1024: [FILL]   768–1023: [FILL]   <768: [FILL, touch targets ≥44px]
+  EDGE CASES
+    Empty: [FILL]  Slow (>400ms): [FILL]  Error: [FILL]
+    Double-tap / rapid nav: [FILL]  Offline: [FILL]
+  ACCESSIBILITY
+    Keyboard: [FILL]  Focus order: [FILL]  Announcements: [FILL]
+
+CONDITIONAL LOGIC
+  If [FILL condition], then [FILL behavior].
+
+OPEN QUESTIONS FOR ENGINEERING
+  [FILL: every guessed backend behavior, labeled "guess"]
+```
+
+## Deliverable
+
+Produce a spec document containing: the element inventory, a state matrix per element, numbered trigger → response interaction statements with motion tokens, screen-transition specs, breakpoint behavior with token-based redlines, edge-case and conditional-logic statements, accessibility behavior, and an open-questions list — ready to hand directly to engineering.
+
+## Common handoff failure modes
+
+- **The happy-path-only spec** — error, empty, and loading states get invented by whoever writes the code, and they will not match the design language.
+- **Raw values instead of tokens** — engineers hard-code the pixel value; the next design-system update misses it.
+- **Untestable prose** — "should feel responsive" produces a QA argument, not a check.
+- **State gaps** — hover and focus omitted because the mockup was drawn for touch; the desktop build ships with dead-feeling controls.
+- **Silent assumptions about the backend** — a spec that assumes instant responses breaks the moment latency is real; every timing assumption must be written and flagged.
+- **Speccing motion values inline** — durations and curves drift per component; reference the motion system and keep the definitions in motion-spec.
+
+## Quality bar
+
+- Every element in the inventory has all Step 3 states or an explicit "n/a because…".
+- Every interaction statement is individually verifiable by QA with no follow-up question.
+- Zero raw color/spacing/duration values — tokens only.
+- Every data-driven view has empty, loading, error, and slow-network behavior.
+- Every guessed value is labeled a guess and listed under open questions.
+- After the build, design-qa-checklist can be run directly against the numbered statements.

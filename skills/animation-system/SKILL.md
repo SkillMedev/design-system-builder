@@ -1,56 +1,61 @@
 ---
 name: Animation System
-description: Design a coherent motion system of durations, easing, and choreography for UI.
+description: Builds a coherent UI motion system — a duration token scale, named easing curves, choreography rules, and a per-component mapping — so every transition in the product draws from one vocabulary instead of ad-hoc values. Use when someone asks "define our motion tokens", "our animations feel inconsistent", "what duration should this modal use", "set up easing standards", or is starting a design system and needs the motion layer. Do NOT use to spec the motion of one specific component or flow — use motion-spec instead; for animated type treatments, use kinetic-typography.
 ---
 
 # Animation System
 
-Use this skill to build a motion system that feels intentional and consistent
-instead of ad-hoc transitions scattered across components.
+Without a motion system, every engineer picks a duration and curve from memory, and the product accumulates dozens of near-identical transitions that read as sloppy even when no single one is wrong. This skill produces the token set and rules that make motion feel like one hand designed it — and prevents the expensive alternative: auditing and re-timing every transition after launch.
 
-## Motion has a job
+Motion must do a job: direct attention, show cause and effect, express hierarchy, or soften a change. A motion that does none of these gets cut — it is latency wearing a costume.
 
-Animation should do work: direct attention, show cause and effect, express
-hierarchy, or soften a change. If a motion does none of these, cut it.
+## Operating procedure
 
-## Step 1: Define duration tokens
+Durations come before easings, and both come before choreography, because choreography rules reference the tokens.
 
-Establish a small scale. Faster for small/near elements, slower for large/far ones.
+### Step 1: Gather inputs
 
-- `instant`: 0ms (state with no transition)
-- `fast`: 100ms (hovers, small toggles)
-- `base`: 200ms (most transitions)
-- `slow`: 300ms (modals, sheets, page-level)
-- `deliberate`: 500ms (large or first-run reveals)
+1. Brand feel on a calm↔energetic axis — it shifts the scale ±50ms and decides whether springs are allowed.
+2. Platforms (web, iOS, Android) and the animation stack (CSS, Framer Motion, native).
+3. The largest animated surfaces (full-page transitions? sheets?) — they set the slow end of the scale.
+4. Existing timing values in the codebase, to map onto tokens rather than orphan.
+5. Token naming convention already in use, so motion tokens match it.
 
-Never exceed ~500ms for interactive feedback — it starts to feel sluggish.
+### Step 2: Define the duration scale
 
-## Step 2: Define easing curves
+Small scale, tiered, with each tier tied to element size and travel distance — duration is proportional to distance and size (small/near = fast, large/far = slow):
 
-- `ease-out` (`cubic-bezier(0, 0, 0.2, 1)`) — for elements **entering**. Fast start, gentle stop.
-- `ease-in` (`cubic-bezier(0.4, 0, 1, 1)`) — for elements **exiting**. They accelerate away.
-- `ease-in-out` (`cubic-bezier(0.4, 0, 0.2, 1)`) — for elements **moving** on screen.
-- `spring` — for playful, physical interactions (drag release, bouncy toggles).
+- `instant`: 0ms — state changes with no transition (checkbox tick).
+- `fast`: 100ms — hovers, small toggles, color changes.
+- `base`: 200ms — most component transitions; the default when unsure.
+- `slow`: 300ms — modals, sheets, page-level transitions.
+- `deliberate`: 500ms — large or first-run reveals only.
 
-Rule of thumb: things that appear should decelerate in; things that leave accelerate out.
+Red line: never exceed ~500ms for interactive feedback — beyond that the UI reads as sluggish, and users start double-clicking. Interactive acknowledgment (the first visible response to input) must land within 100ms even when the full transition is longer.
 
-## Step 3: Choreography
+### Step 3: Define easing curves
 
-When multiple elements animate, sequence them:
+- `ease-out` — `cubic-bezier(0, 0, 0.2, 1)` — elements **entering**: fast start, gentle stop; arrives eagerly.
+- `ease-in` — `cubic-bezier(0.4, 0, 1, 1)` — elements **exiting**: they accelerate away.
+- `ease-in-out` — `cubic-bezier(0.4, 0, 0.2, 1)` — elements **moving** on screen from A to B.
+- `spring` — playful, physical interactions (drag release, bouncy toggles); only if Step 1 said the brand supports it.
 
-- **Stagger** list items by 20–40ms so they cascade, not flash.
-- **Anchor** transitions to the trigger — a menu grows from the button that opened it.
-- Animate the **most important** element first; supporting elements follow.
-- Avoid animating more than ~5 things at once; group the rest.
+Enter/exit asymmetry is a principle, not a preference: entrances decelerate in and get more time; exits accelerate out and take roughly 20–30% less duration than the matching entrance, because users need to see something arrive but only need to notice it leave.
 
-## Step 4: Properties to animate
+### Step 4: Define choreography rules
 
-Prefer GPU-friendly properties: `transform` and `opacity`. Avoid animating
-`width`, `height`, `top`, or `left` — they trigger layout and stutter.
+- **Stagger** list items by 20–40ms so they cascade instead of flashing as a block.
+- **Anchor** transitions to their trigger — a menu grows from the button that opened it, showing cause and effect.
+- The **most important** element animates first; supporting elements follow.
+- Never animate more than ~5 things independently at once; group the rest into one moving unit.
 
-## Step 5: Accessibility
+### Step 5: Constrain animatable properties
 
-Always honor reduced-motion. Provide a non-animated fallback:
+Animate GPU-friendly properties only: `transform` and `opacity`. Ban animating `width`, `height`, `top`, `left`, and `margin` — they trigger layout and stutter on mid-range devices. Encode this in the token documentation so it survives code review.
+
+### Step 6: Honor reduced motion — mandatory, not optional
+
+Every motion the system defines must have a reduced-motion path. Vestibular disorders make large parallax, zoom, and slide motions physically nauseating for some users; `prefers-reduced-motion` is an accessibility requirement on par with contrast.
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -58,20 +63,66 @@ Always honor reduced-motion. Provide a non-animated fallback:
 }
 ```
 
-Replace large motions with simple cross-fades rather than removing feedback entirely.
+Replace large motions with simple cross-fades rather than removing feedback entirely — the user still needs to see that something changed.
 
-## Step 6: Document as tokens
+### Step 7: Ship the token set and component mapping
 
-Express the system as named tokens so engineers reuse them:
+Publish the system as named tokens plus a per-component mapping (component → what animates → duration token → easing token). The mapping is what stops drift: an engineer building a new dropdown copies the menu row, not a number from memory.
 
-```js
-const motion = {
-  duration: { fast: '100ms', base: '200ms', slow: '300ms' },
-  easing: { enter: 'cubic-bezier(0,0,0.2,1)', exit: 'cubic-bezier(0.4,0,1,1)' },
-};
+## Worked token set (copy-paste artifact)
+
+```javascript
+// motion.tokens.js — single source of truth for UI motion
+export const motion = {
+  duration: {
+    instant: '0ms',
+    fast: '100ms',      // hovers, toggles, color changes
+    base: '200ms',      // default component transition
+    slow: '300ms',      // modals, sheets, page transitions
+    deliberate: '500ms',// large reveals only — hard ceiling
+  },
+  easing: {
+    enter: 'cubic-bezier(0, 0, 0.2, 1)',   // decelerate in
+    exit: 'cubic-bezier(0.4, 0, 1, 1)',    // accelerate out
+    move: 'cubic-bezier(0.4, 0, 0.2, 1)',  // on-screen A→B
+  },
+  stagger: { list: '30ms' },
+}
+
+// Per-component mapping — extend one row per new component
+export const componentMotion = {
+  tooltip:  { animates: 'opacity',            in: ['fast', 'enter'], out: ['fast', 'exit'] },
+  dropdown: { animates: 'opacity, transform', in: ['base', 'enter'], out: ['fast', 'exit'] },
+  modal:    { animates: 'opacity, transform', in: ['slow', 'enter'], out: ['base', 'exit'] },
+  toast:    { animates: 'transform, opacity', in: ['base', 'enter'], out: ['base', 'exit'] },
+  pageNav:  { animates: 'opacity, transform', in: ['slow', 'enter'], out: ['base', 'exit'] },
+}
 ```
 
-## Output
+Read the mapping: every exit is one tier faster than or equal to its entrance (the asymmetry rule), nothing exceeds `slow` except deliberate reveals, and only `transform`/`opacity` appear in `animates`.
 
-Deliver the duration scale, easing set, choreography rules, and a per-component
-mapping (what animates, which duration, which curve) the team can implement directly.
+Bad: modal opens with `all 400ms ease` — animates layout properties, uses a symmetric curve, and exits as slowly as it enters.
+Good: modal opens `opacity, transform 300ms cubic-bezier(0,0,0.2,1)`, closes `200ms cubic-bezier(0.4,0,1,1)`.
+
+## Deliverable
+
+Produce a motion system document containing: the duration scale with usage guidance per tier, the easing set with enter/exit/move assignments, choreography rules (stagger, anchoring, priority, the 5-element cap), the animatable-property constraint, the reduced-motion fallback, and the per-component mapping table — implementable by engineering without further design input.
+
+## Do NOT
+
+- Do not exceed ~500ms for anything interactive — sluggishness reads as brokenness.
+- Do not use one symmetric easing everywhere — enter and exit have different jobs and different curves.
+- Do not give exits as much time as entrances; exits are noticed, not watched.
+- Do not animate layout properties (`width`, `height`, `top`, `left`) — they stutter; use `transform`.
+- Do not ship any motion without a reduced-motion path — it is an accessibility failure, not a polish gap.
+- Do not let components carry inline timing values — every value outside the token set is future drift.
+- Do not keep a motion that has no job (attention, causality, hierarchy, or softening); decoration is latency.
+
+## Quality bar
+
+- Every duration and curve in the product maps to a named token; a codebase grep for `cubic-bezier` or `ms` outside the token file returns nothing new.
+- Every entrance uses a decelerating curve; every exit accelerates and is no slower than its entrance.
+- Reduced-motion is verified by flipping the OS setting, not assumed.
+- The component mapping covers every animated component that exists today, and adding a component means adding one row.
+
+For the motion details of one specific component or flow — exact keyframes, sequencing diagrams, handoff redlines — route to motion-spec; the system defined here is its vocabulary. For expressive animated typography, route to kinetic-typography.
