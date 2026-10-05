@@ -1,16 +1,17 @@
 # Design System Builder
 
-**For design/UI engineers: ship a production design system, tokens to handoff.** — built in-house by [Skill&nbsp;Me](https://skillme.dev).
+**For design/UI engineers: ship a production design system, tokens to handoff.** — built in-house by [Skill&nbsp;Me](https://skillme.dev/?utm_source=github&utm_medium=readme&utm_campaign=pack-design-system-builder).
 
 Reach for this when you're standing up or maturing a real design system and need every layer to fit together - not a pile of one-off design tips. You get a coherent token architecture (global → semantic → component) with theming and dark mode, WCAG contrast math with a runnable checker and verified palette examples, a keyline-precise icon system (24px grid, 2px stroke, export pipeline), a motion token set with reduced-motion built in, clean component APIs, and dev-ready spec templates with states, breakpoints, and edge cases filled in. The result survives light/dark, scale, and the handoff to engineering.
 
-⭐ **If this is useful, star the repo** — it's how we gauge what to build next.
-
 ## Install
 
-- **From the catalog:** [skillme.dev/pack/design-system-builder](https://skillme.dev/pack/design-system-builder) — install the whole pack into Claude in one step.
+- **Claude, ChatGPT, Codex, Cursor (connector):** [install the whole pack from skillme.dev](https://skillme.dev/pack/design-system-builder?utm_source=github&utm_medium=readme&utm_campaign=pack-design-system-builder) — one connection, then ask for any skill by name.
+- **As files for Codex, Cursor, or Claude Code:** `npx @skillme/cli add color-accessibility icon-system prototype-spec animation-system --target all`
 - **With the skills CLI:** `npx skills add SkillMedev/design-system-builder`
-- **Manually:** copy any `skills/<slug>/SKILL.md` into your Claude skills directory.
+- **Manually:** copy any `skills/<slug>/SKILL.md` into `.agents/skills/`, `.cursor/skills/`, or `.claude/skills/`.
+
+⭐ **If this is useful, star the repo** — it's how we gauge what to build next.
 
 ## Skills in this pack
 
@@ -26,4 +27,4 @@ Reach for this when you're standing up or maturing a real design system and need
 ## License
 
 MIT — see [LICENSE](LICENSE). Skills are portable `SKILL.md` files; the canonical
-copies live in the [Skill&nbsp;Me catalog](https://skillme.dev).
+copies live in the [Skill&nbsp;Me catalog](https://skillme.dev/browse?utm_source=github&utm_medium=readme&utm_campaign=pack-design-system-builder).
